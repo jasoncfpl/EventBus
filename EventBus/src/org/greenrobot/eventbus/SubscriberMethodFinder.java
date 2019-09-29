@@ -59,8 +59,10 @@ class SubscriberMethodFinder {
         }
 
         if (ignoreGeneratedIndex) {
+            // 使用反射方式获取
             subscriberMethods = findUsingReflection(subscriberClass);
         } else {
+            // 使用SubscriberIndex方式获取
             subscriberMethods = findUsingInfo(subscriberClass);
         }
         if (subscriberMethods.isEmpty()) {
@@ -137,13 +139,23 @@ class SubscriberMethodFinder {
         return null;
     }
 
+    /**
+     * 使用反射方式获取订阅类
+     * @param subscriberClass
+     * @return
+     */
     private List<SubscriberMethod> findUsingReflection(Class<?> subscriberClass) {
+        //FindState
         FindState findState = prepareFindState();
+        //关联subscriberClass
         findState.initForSubscriber(subscriberClass);
         while (findState.clazz != null) {
+            //查找订阅方法
             findUsingReflectionInSingleClass(findState);
+            //使findState.clazz指向父类，循环遍历父类的订阅方法
             findState.moveToSuperclass();
         }
+        //返回查找到的订阅list
         return getMethodsAndRelease(findState);
     }
 
@@ -157,13 +169,21 @@ class SubscriberMethodFinder {
             methods = findState.clazz.getMethods();
             findState.skipSuperClasses = true;
         }
+        //遍历类中的所有方法
         for (Method method : methods) {
             int modifiers = method.getModifiers();
+            //过滤static和非public方法
             if ((modifiers & Modifier.PUBLIC) != 0 && (modifiers & MODIFIERS_IGNORE) == 0) {
+                //获取方法的所有参数
                 Class<?>[] parameterTypes = method.getParameterTypes();
+                /*
+                  根据参数个数过滤
+                  所以eventBus接收方法只能有一个参数
+                 */
                 if (parameterTypes.length == 1) {
                     Subscribe subscribeAnnotation = method.getAnnotation(Subscribe.class);
                     if (subscribeAnnotation != null) {
+                        //获取第一个参数
                         Class<?> eventType = parameterTypes[0];
                         if (findState.checkAdd(method, eventType)) {
                             ThreadMode threadMode = subscribeAnnotation.threadMode();
