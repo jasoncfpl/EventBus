@@ -74,11 +74,20 @@ class SubscriberMethodFinder {
         }
     }
 
+    /**
+     * 使用SubscriberInfo获取订阅方法
+     * @param subscriberClass
+     * @return
+     */
     private List<SubscriberMethod> findUsingInfo(Class<?> subscriberClass) {
+        //创建FindState
         FindState findState = prepareFindState();
+        //关联subscriberClass
         findState.initForSubscriber(subscriberClass);
         while (findState.clazz != null) {
+            //获取注解处理器
             findState.subscriberInfo = getSubscriberInfo(findState);
+            //如果有注解处理器则不为空
             if (findState.subscriberInfo != null) {
                 SubscriberMethod[] array = findState.subscriberInfo.getSubscriberMethods();
                 for (SubscriberMethod subscriberMethod : array) {
