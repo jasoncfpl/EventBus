@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2016 Markus Junginger, greenrobot (http://greenrobot.org)
+ * Copyright (C) 2012-2020 Markus Junginger, greenrobot (http://greenrobot.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.greenrobot.eventbus;
 
+import org.greenrobot.eventbus.android.AndroidComponents;
 import java.util.logging.Level;
 
 public interface Logger {
@@ -23,7 +24,7 @@ public interface Logger {
 
     void log(Level level, String msg, Throwable th);
 
-    public static class JavaLogger implements Logger {
+    class JavaLogger implements Logger {
         protected final java.util.logging.Logger logger;
 
         public JavaLogger(String tag) {
@@ -44,7 +45,7 @@ public interface Logger {
 
     }
 
-    public static class SystemOutLogger implements Logger {
+    class SystemOutLogger implements Logger {
 
         @Override
         public void log(Level level, String msg) {
@@ -57,6 +58,16 @@ public interface Logger {
             th.printStackTrace(System.out);
         }
 
+    }
+
+    class Default {
+        public static Logger get() {
+            if (AndroidComponents.areAvailable()) {
+                return AndroidComponents.get().logger;
+            }
+
+            return new SystemOutLogger();
+        }
     }
 
 }

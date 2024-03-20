@@ -1,37 +1,23 @@
 apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'signing'
 
-archivesBaseName = 'eventbus-annotation-processor'
-group = 'org.greenrobot'
-version = '3.1.0'
+group = rootProject.group
+version = rootProject.version
 
-sourceCompatibility = 1.7
-
-def isSnapshot = version.endsWith('-SNAPSHOT')
-def sonatypeRepositoryUrl
-if (isSnapshot) {
-    sonatypeRepositoryUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-} else {
-    sonatypeRepositoryUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-}
-
-// Still unsupported, see http://issues.gradle.org/browse/GRADLE-784
-// Like this, it won't appear at all in the POM
-configurations {
-    provided
-    deployerJars
-}
+java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.targetCompatibility = JavaVersion.VERSION_1_8
 
 dependencies {
-    compile project(':eventbus')
-    compile 'de.greenrobot:java-common:2.3.1'
-    deployerJars 'org.apache.maven.wagon:wagon-webdav:1.0-beta-2'
+    implementation project(':eventbus-java')
+    implementation 'de.greenrobot:java-common:2.3.1'
+
+    // Generates the required META-INF descriptor to make the processor incremental.
+    def incap = '0.2'
+    compileOnly "net.ltgt.gradle.incap:incap:$incap"
+    annotationProcessor "net.ltgt.gradle.incap:incap-processor:$incap"
 }
 
 sourceSets {
     main {
-        compileClasspath += configurations.provided
         java {
             srcDir 'src'
         }
@@ -42,94 +28,34 @@ sourceSets {
 }
 
 javadoc {
-    classpath += configurations.provided
     title = "EventBus Annotation Processor ${version} API"
-	options.bottom = 'Available under the Apache License, Version 2.0 - <i>Copyright &#169; 2015-2016 <a href="http://greenrobot.org">greenrobot.org</a>. All Rights Reserved.</i>'
+	options.bottom = 'Available under the Apache License, Version 2.0 - <i>Copyright &#169; 2015-2020 <a href="https://greenrobot.org">greenrobot.org</a>. All Rights Reserved.</i>'
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier.set("javadoc")
     from 'build/docs/javadoc'
 }
 
 task sourcesJar(type: Jar) {
+    archiveClassifier.set("sources")
     from sourceSets.main.allSource
-    classifier = 'sources'
 }
 
-artifacts {
-    archives jar
-    archives javadocJar
-    archives sourcesJar
-}
+apply from: rootProject.file("gradle/publish.gradle")
+// Set project-specific properties
+afterEvaluate {
+    publishing.publications {
+        mavenJava(MavenPublication) {
+            artifactId = "eventbus-annotation-processor"
 
-signing {
-    if (project.hasProperty('signing.keyId') && project.hasProperty('signing.password') &&
-            project.hasProperty('signing.secretKeyRingFile')) {
-        sign configurations.archives
-    } else {
-        println "Signing information missing/incomplete for ${project.name}"
-    }
-}
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            if (project.hasProperty('preferedRepo')) println "preferedRepo = $preferedRepo"
-            if (project.hasProperty('preferedRepo') && preferedRepo == 'local') {
-                println "Deploying to local repo (aka install)..."
-                repository url: repositories.mavenLocal().url
-            } else if (project.hasProperty('preferedRepo') && project.hasProperty('preferedUsername')
-                    && project.hasProperty('preferedPassword')) {
-                configuration = configurations.deployerJars
-                repository(url: preferedRepo) {
-                    authentication(userName: preferedUsername, password: preferedPassword)
-                }
-            } else if (project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')) {
-                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-                repository(url: sonatypeRepositoryUrl) {
-                    authentication(userName: sonatypeUsername, password: sonatypePassword)
-                }
-            } else {
-                println "Settings sonatypeUsername/sonatypePassword missing/incomplete for ${project.name}"
-            }
-
-            pom.project {
-                name 'EventBus Annotation Processor'
-                packaging 'jar'
-                description 'Precompiler for EventBus Annotations.'
-                url 'http://greenrobot.org/eventbus/'
-
-                scm {
-                    url 'https://github.com/greenrobot/EventBus'
-                    connection 'scm:git@github.com:greenrobot/EventBus.git'
-                    developerConnection 'scm:git@github.com:greenrobot/EventBus.git'
-                }
-
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        distribution 'repo'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'greenrobot'
-                        name 'greenrobot'
-                    }
-                }
-
-                issueManagement {
-                    system 'GitHub Issues'
-                    url 'https://github.com/greenrobot/EventBus/issues'
-                }
-
-                organization {
-                    name 'greenrobot'
-                    url 'http://greenrobot.org'
-                }
+            from components.java
+            artifact javadocJar
+            artifact sourcesJar
+            pom {
+                name = "EventBus Annotation Processor"
+                description = "Precompiler for EventBus Annotations."
+                packaging = "jar"
             }
         }
     }

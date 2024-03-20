@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2016 Markus Junginger, greenrobot (http://greenrobot.org)
+ * Copyright (C) 2012-2020 Markus Junginger, greenrobot (http://greenrobot.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,8 @@
  */
 package org.greenrobot.eventbus;
 
-import android.os.Looper;
-
-import org.greenrobot.eventbus.android.AndroidLogger;
+import org.greenrobot.eventbus.android.AndroidComponents;
 import org.greenrobot.eventbus.meta.SubscriberInfoIndex;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -29,6 +26,7 @@ import java.util.concurrent.Executors;
  * Creates EventBus instances with custom parameters and also allows to install a custom default EventBus instance.
  * Create a new builder using {@link EventBus#builder()}.
  */
+@SuppressWarnings("unused")
 public class EventBusBuilder {
     private final static ExecutorService DEFAULT_EXECUTOR_SERVICE = Executors.newCachedThreadPool();
 
@@ -88,7 +86,7 @@ public class EventBusBuilder {
      * By default, EventBus considers the event class hierarchy (subscribers to super classes will be notified).
      * Switching this feature off will improve posting of events. For simple event classes extending Object directly,
      * we measured a speed up of 20% for event posting. For more complex event hierarchies, the speed up should be
-     * >20%.
+     * greater than 20%.
      * <p/>
      * However, keep in mind that event posting usually consumes just a small proportion of CPU time inside an app,
      * unless it is posting at high rates, e.g. hundreds/thousands of events per second.
@@ -145,8 +143,7 @@ public class EventBusBuilder {
     /**
      * Set a specific log handler for all EventBus logging.
      * <p/>
-     * By default all logging is via {@link android.util.Log} but if you want to use EventBus
-     * outside the Android environment then you will need to provide another log target.
+     * By default, all logging is via {@code android.util.Log} on Android or System.out on JVM.
      */
     public EventBusBuilder logger(Logger logger) {
         this.logger = logger;
@@ -157,31 +154,16 @@ public class EventBusBuilder {
         if (logger != null) {
             return logger;
         } else {
-            // also check main looper to see if we have "good" Android classes (not Stubs etc.)
-            return AndroidLogger.isAndroidLogAvailable() && getAndroidMainLooperOrNull() != null
-                    ? new AndroidLogger("EventBus") :
-                    new Logger.SystemOutLogger();
+            return Logger.Default.get();
         }
     }
-
 
     MainThreadSupport getMainThreadSupport() {
         if (mainThreadSupport != null) {
             return mainThreadSupport;
-        } else if (AndroidLogger.isAndroidLogAvailable()) {
-            Object looperOrNull = getAndroidMainLooperOrNull();
-            return looperOrNull == null ? null :
-                    new MainThreadSupport.AndroidHandlerMainThreadSupport((Looper) looperOrNull);
+        } else if (AndroidComponents.areAvailable()) {
+            return AndroidComponents.get().defaultMainThreadSupport;
         } else {
-            return null;
-        }
-    }
-
-    Object getAndroidMainLooperOrNull() {
-        try {
-            return Looper.getMainLooper();
-        } catch (RuntimeException e) {
-            // Not really a functional Android (e.g. "Stub!" maven dependencies)
             return null;
         }
     }

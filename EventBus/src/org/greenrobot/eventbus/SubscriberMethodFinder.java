@@ -175,7 +175,17 @@ class SubscriberMethodFinder {
             methods = findState.clazz.getDeclaredMethods();
         } catch (Throwable th) {
             // Workaround for java.lang.NoClassDefFoundError, see https://github.com/greenrobot/EventBus/issues/149
-            methods = findState.clazz.getMethods();
+            try {
+                methods = findState.clazz.getMethods();
+            } catch (LinkageError error) { // super class of NoClassDefFoundError to be a bit more broad...
+                String msg = "Could not inspect methods of " + findState.clazz.getName();
+                if (ignoreGeneratedIndex) {
+                    msg += ". Please consider using EventBus annotation processor to avoid reflection.";
+                } else {
+                    msg += ". Please make this class visible to EventBus annotation processor to avoid reflection.";
+                }
+                throw new EventBusException(msg, error);
+            }
             findState.skipSuperClasses = true;
         }
         //遍历类中的所有方法
@@ -288,8 +298,10 @@ class SubscriberMethodFinder {
             } else {
                 clazz = clazz.getSuperclass();
                 String clazzName = clazz.getName();
-                /** Skip system classes, this just degrades performance. */
-                if (clazzName.startsWith("java.") || clazzName.startsWith("javax.") || clazzName.startsWith("android.")) {
+                // Skip system classes, this degrades performance.
+                // Also we might avoid some ClassNotFoundException (see FAQ for background).
+                if (clazzName.startsWith("java.") || clazzName.startsWith("javax.") ||
+                        clazzName.startsWith("android.") || clazzName.startsWith("androidx.")) {
                     clazz = null;
                 }
             }

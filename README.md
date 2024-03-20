@@ -1,9 +1,10 @@
-Hey, do have a minute for a [quick survey](https://docs.google.com/forms/d/e/1FAIpQLSePA8NqA9Jlbvh28xcFVbmIGUzHW3dnsxuxi23-ZDPPfkWMSQ/viewform) on how we are doing with EventBus? 
-
 EventBus
 ========
-EventBus is a publish/subscribe event bus for Android and Java.<br/>
+[EventBus](https://greenrobot.org/eventbus/) is a publish/subscribe event bus for Android and Java.<br/>
 <img src="EventBus-Publish-Subscribe.png" width="500" height="187"/>
+
+[![Build Status](https://github.com/greenrobot/EventBus/actions/workflows/gradle.yml/badge.svg)](https://github.com/greenrobot/EventBus/actions)
+[![Follow greenrobot on Twitter](https://img.shields.io/twitter/follow/greenrobot_de.svg?style=flat-square&logo=twitter)](https://twitter.com/greenrobot_de)
 
 EventBus...
 
@@ -13,11 +14,9 @@ EventBus...
     * avoids complex and error-prone dependencies and life cycle issues
  * makes your code simpler
  * is fast
- * is tiny (~50k jar)
- * is proven in practice by apps with 100,000,000+ installs
+ * is tiny (~60k jar)
+ * is proven in practice by apps with 1,000,000,000+ installs
  * has advanced features like delivery threads, subscriber priorities, etc.
-
- [![Build Status](https://travis-ci.org/greenrobot/EventBus.svg?branch=master)](https://travis-ci.org/greenrobot/EventBus)
 
 EventBus in 3 steps
 -------------------
@@ -28,11 +27,13 @@ EventBus in 3 steps
     ```
 
 2. Prepare subscribers:
-    Declare and annotate your subscribing method, optionally specify a [thread mode](http://greenrobot.org/eventbus/documentation/delivery-threads-threadmode/):  
+    Declare and annotate your subscribing method, optionally specify a [thread mode](https://greenrobot.org/eventbus/documentation/delivery-threads-threadmode/):  
 
     ```java
     @Subscribe(threadMode = ThreadMode.MAIN)  
-    public void onMessageEvent(MessageEvent event) {/* Do something */};
+    public void onMessageEvent(MessageEvent event) {
+        // Do something
+    }
     ```
     Register and unregister your subscriber. For example on Android, activities and fragments should usually register according to their life cycle:
 
@@ -56,56 +57,61 @@ EventBus in 3 steps
     EventBus.getDefault().post(new MessageEvent());
     ```
 
-Read the full [getting started guide](http://greenrobot.org/eventbus/documentation/how-to-get-started/).
+Read the full [getting started guide](https://greenrobot.org/eventbus/documentation/how-to-get-started/).
+
+There are also some [examples](https://github.com/greenrobot-team/greenrobot-examples).
+
+**Note:** we highly recommend the [EventBus annotation processor with its subscriber index](https://greenrobot.org/eventbus/documentation/subscriber-index/).
+This will avoid some reflection related problems seen in the wild.  
 
 Add EventBus to your project
 ----------------------------
 <a href="https://search.maven.org/search?q=g:org.greenrobot%20AND%20a:eventbus"><img src="https://img.shields.io/maven-central/v/org.greenrobot/eventbus.svg"></a>
 
-Via Gradle:
-```gradle
-implementation 'org.greenrobot:eventbus:3.1.1'
+Available on <a href="https://search.maven.org/search?q=g:org.greenrobot%20AND%20a:eventbus">Maven Central</a>.
+
+Android projects:
+```groovy
+implementation("org.greenrobot:eventbus:3.3.1")
 ```
 
-Via Maven:
+Java projects:
+```groovy
+implementation("org.greenrobot:eventbus-java:3.3.1")
+```
 ```xml
 <dependency>
     <groupId>org.greenrobot</groupId>
-    <artifactId>eventbus</artifactId>
-    <version>3.1.1</version>
+    <artifactId>eventbus-java</artifactId>
+    <version>3.3.1</version>
 </dependency>
 ```
 
-Or download [the latest JAR](https://search.maven.org/remote_content?g=org.greenrobot&a=eventbus&v=LATEST) from Maven Central.
+R8, ProGuard
+------------
+
+If your project uses R8 or ProGuard this library ships [with embedded rules](/eventbus-android/consumer-rules.pro).
 
 Homepage, Documentation, Links
 ------------------------------
-For more details please check the [EventBus website](http://greenrobot.org/eventbus). Here are some direct links you may find useful:
+For more details please check the [EventBus website](https://greenrobot.org/eventbus). Here are some direct links you may find useful:
 
-[Features](http://greenrobot.org/eventbus/features/)
+[Features](https://greenrobot.org/eventbus/features/)
 
-[Documentation](http://greenrobot.org/eventbus/documentation/)
+[Documentation](https://greenrobot.org/eventbus/documentation/)
 
-[ProGuard](http://greenrobot.org/eventbus/documentation/proguard)
+[Changelog](https://github.com/greenrobot/EventBus/releases)
 
-[Changelog](http://greenrobot.org/eventbus/changelog/)
-
-[FAQ](http://greenrobot.org/eventbus/documentation/faq/)
-
-How does EventBus compare to other solutions, like Otto from Square? Check this [comparison](COMPARISON.md).
+[FAQ](https://greenrobot.org/eventbus/documentation/faq/)
 
 License
 -------
-Copyright (C) 2012-2017 Markus Junginger, greenrobot (http://greenrobot.org)
+Copyright (C) 2012-2021 Markus Junginger, greenrobot (https://greenrobot.org)
 
 EventBus binaries and source code can be used according to the [Apache License, Version 2.0](LICENSE).
 
-More Open Source by greenrobot
-==============================
-[__ObjectBox__](http://objectbox.io/) ([GitHub](https://github.com/objectbox/objectbox-java)) is a new superfast object-oriented database for mobile.
+Other projects by greenrobot
+============================
+[__ObjectBox__](https://objectbox.io/) ([GitHub](https://github.com/objectbox/objectbox-java)) is a new superfast object-oriented database.
 
-[__Essentials__](http://greenrobot.org/essentials/) ([GitHub](https://github.com/greenrobot/essentials)) is a set of utility classes and hash functions for Android & Java projects.
-
-[__greenDAO__](http://greenrobot.org/greendao/) ([GitHub](https://github.com/greenrobot/greenDAO)) is an ORM optimized for Android: it maps database tables to Java objects and uses code generation for optimal speed.
-
-Check our [homepage](http://greenrobot.org/) to stay up to date.
+[__Essentials__](https://github.com/greenrobot/essentials) is a set of utility classes and hash functions for Android & Java projects.

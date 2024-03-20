@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2016 Markus Junginger, greenrobot (http://greenrobot.org)
+ * Copyright (C) 2012-2020 Markus Junginger, greenrobot (http://greenrobot.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.greenrobot.eventbus;
 
+import org.greenrobot.eventbus.android.AndroidDependenciesDetector;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,12 +28,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 
 /**
- * EventBus is a central publish/subscribe event system for Android. Events are posted ({@link #post(Object)}) to the
- * bus, which delivers it to subscribers that have a matching handler method for the event type. To receive events,
- * subscribers must register themselves to the bus using {@link #register(Object)}. Once registered, subscribers
- * receive events until {@link #unregister(Object)} is called. Event handling methods must be annotated by
- * {@link Subscribe}, must be public, return nothing (void), and have exactly one parameter
- * (the event).
+ * EventBus is a central publish/subscribe event system for Java and Android.
+ * Events are posted ({@link #post(Object)}) to the bus, which delivers it to subscribers that have a matching handler
+ * method for the event type.
+ * To receive events, subscribers must register themselves to the bus using {@link #register(Object)}.
+ * Once registered, subscribers receive events until {@link #unregister(Object)} is called.
+ * Event handling methods must be annotated by {@link Subscribe}, must be public, return nothing (void),
+ * and have exactly one parameter (the event).
  *
  * @author Markus Junginger, greenrobot
  */
@@ -138,6 +140,12 @@ public class EventBus {
      * ThreadMode} and priority.
      */
     public void register(Object subscriber) {
+        if (AndroidDependenciesDetector.isAndroidSDKAvailable() && !AndroidDependenciesDetector.areAndroidComponentsAvailable()) {
+            // Crash if the user (developer) has not imported the Android compatibility library.
+            throw new RuntimeException("It looks like you are using EventBus on Android, " +
+                    "make sure to add the \"eventbus\" Android library to your dependencies.");
+        }
+
         Class<?> subscriberClass = subscriber.getClass();
         List<SubscriberMethod> subscriberMethods = subscriberMethodFinder.findSubscriberMethods(subscriberClass);
         synchronized (this) {
@@ -213,7 +221,7 @@ public class EventBus {
      * poster.
      */
     private boolean isMainThread() {
-        return mainThreadSupport != null ? mainThreadSupport.isMainThread() : true;
+        return mainThreadSupport == null || mainThreadSupport.isMainThread();
     }
 
     public synchronized boolean isRegistered(Object subscriber) {
@@ -408,7 +416,7 @@ public class EventBus {
             for (Subscription subscription : subscriptions) {
                 postingState.event = event;
                 postingState.subscription = subscription;
-                boolean aborted = false;
+                boolean aborted;
                 try {
                     postToSubscription(subscription, event, postingState.isMainThread);
                     aborted = postingState.canceled;
